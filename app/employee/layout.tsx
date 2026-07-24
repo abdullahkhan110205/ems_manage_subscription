@@ -16,11 +16,13 @@ export default async function EmployeeLayout({
 
 }) {
 
+
     const session = await auth();
 
 
     const isPremium =
-    session?.user?.subscriptionStatus === "ACTIVE";
+        session?.user?.subscriptionStatus === "ACTIVE";
+
 
 
     return (
@@ -51,9 +53,9 @@ export default async function EmployeeLayout({
 
                     <Link
 
-                    href="/employee/dashboard"
+                        href="/employee/dashboard"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+                        className="text-gray-900 block p-3 rounded hover:bg-gray-400"
 
                     >
 
@@ -65,12 +67,11 @@ export default async function EmployeeLayout({
 
 
 
-
                     <Link
 
-                    href="/employee/profile"
+                        href="/employee/profile"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+                        className="text-gray-900 block p-3 rounded hover:bg-gray-400"
 
                     >
 
@@ -82,12 +83,11 @@ export default async function EmployeeLayout({
 
 
 
-
                     <Link
 
-                    href="/employee/attendance"
+                        href="/employee/attendance"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+                        className="text-gray-900 block p-3 rounded hover:bg-gray-400"
 
                     >
 
@@ -99,12 +99,11 @@ export default async function EmployeeLayout({
 
 
 
-
                     <Link
 
-                    href="/employee/leaves"
+                        href="/employee/leaves"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+                        className="text-gray-900 block p-3 rounded hover:bg-gray-400"
 
                     >
 
@@ -116,31 +115,47 @@ export default async function EmployeeLayout({
 
 
 
+                    <LockedNavItem
+
+                        href="/employee/projects"
+
+                        label="📂 My Projects"
+
+                        locked={!isPremium}
+
+                    />
+
+
+
+
 
                     <LockedNavItem
 
-    href="/employee/projects"
+                        href="/employee/payroll"
 
-    label="📂 My Projects"
+                        label="💰 Payroll"
 
-    locked={!isPremium}
+                        locked={!isPremium}
 
-/>
-
-
+                    />
 
 
 
 
-                    <LockedNavItem
 
-    href="/employee/payroll"
+                    {/* Subscription Page */}
 
-    label="💰 Payroll"
+                    <Link
 
-    locked={!isPremium}
+                        href="/employee/subscription"
 
-/>
+                        className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+
+                    >
+
+                        ⭐ Subscription
+
+                    </Link>
 
 
 
@@ -150,33 +165,42 @@ export default async function EmployeeLayout({
 
 
 
-                {/* Subscription Button */}
-
-                <div className="mt-6">
 
 
-{
-    isPremium ? (
+                {/* Subscription Status */}
 
-        <SubscriptionCard
-            isPremium={true}
-        />
-
-    ) : (
-
-        <UpgradeButton />
-
-    )
-}
+                <div className="text-gray-900 mt-6">
 
 
-</div>
+                    {
+                        isPremium ? (
+
+                            <SubscriptionCard
+
+                                isPremium={true}
+
+                            />
+
+
+                        ) : (
+
+
+                            <UpgradeButton />
+
+
+                        )
+                    }
+
+
+                </div>
 
 
 
 
 
-                {/* Logout Button */}
+
+
+                {/* Logout */}
 
                 <div className="mt-3">
 
@@ -194,15 +218,11 @@ export default async function EmployeeLayout({
 
 
 
-
-
             {/* Content */}
 
             <main className="flex-1 p-6">
 
-
                 {children}
-
 
             </main>
 
