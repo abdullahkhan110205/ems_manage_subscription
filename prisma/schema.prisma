@@ -1,158 +1,185 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String
-  email               String               @unique
-  password            String?
-  role                Role                 @default(EMPLOYEE)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  emailVerified       DateTime?
-  image               String?
-  accounts            Account[]
-  employee            Employee?
+
+  id String @id @default(cuid())
+
+  name String
+
+  email String @unique
+
+  password String?
+
+  role Role @default(EMPLOYEE)
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+  emailVerified DateTime?
+
+  image String?
+
+
+  accounts Account[]
+
+  employee Employee?
+
   passwordResetTokens PasswordResetToken[]
-  sessions            Session[]
+
+  sessions Session[]
+
+
+
+  // Stripe fields
+
+  stripeCustomerId String? @unique
+
+  stripeSubscriptionId String? @unique
+
+  subscriptionStatus String @default("FREE")
+
 }
 
 model Department {
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  id        String     @id @default(cuid())
-  employees Employee[]
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  id        String     @id @default(cuid())
+  employees Employee[]
 }
 
 model Payroll {
-  id          String   @id @default(cuid())
-  employeeId  String
-  billingDate DateTime @default(now())
-  basicSalary Float
-  bonus       Float    @default(0)
-  deductions  Float    @default(0)
-  netSalary   Float
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  employeeId  String
+  billingDate DateTime @default(now())
+  basicSalary Float
+  bonus       Float    @default(0)
+  deductions  Float    @default(0)
+  netSalary   Float
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Project {
-  id          String            @id @default(cuid())
-  name        String
-  description String?
-  startDate   DateTime
-  deadline    DateTime
-  createdAt   DateTime          @default(now())
-  employees   ProjectEmployee[]
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime
+  deadline    DateTime
+  createdAt   DateTime          @default(now())
+  employees   ProjectEmployee[]
 }
 
 model ProjectEmployee {
-  id         String   @id @default(cuid())
-  projectId  String
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  projectId  String
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Employee {
-  id               String            @id @default(cuid())
-  userId           String            @unique
-  position         String?
-  joinedAt         DateTime?
-  salary           Float?
-  departmentId     String?
-  attendance       Attendance[]
-  department       Department?       @relation(fields: [departmentId], references: [id])
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leaves           Leave[]
-  payrolls         Payroll[]
-  projectEmployees ProjectEmployee[]
+  id               String            @id @default(cuid())
+  userId           String            @unique
+  position         String?
+  joinedAt         DateTime?
+  salary           Float?
+  departmentId     String?
+  attendance       Attendance[]
+  department       Department?       @relation(fields: [departmentId], references: [id])
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaves           Leave[]
+  payrolls         Payroll[]
+  projectEmployees ProjectEmployee[]
 }
 
 model Attendance {
-  id         String    @id @default(cuid())
-  employeeId String
-  date       DateTime  @default(now())
-  checkIn    DateTime?
-  checkOut   DateTime?
-  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  employeeId String
+  date       DateTime  @default(now())
+  checkIn    DateTime?
+  checkOut   DateTime?
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Leave {
-  id         String      @id @default(cuid())
-  employeeId String
-  reason     String
-  startDate  DateTime
-  endDate    DateTime
-  status     LeaveStatus @default(PENDING)
-  createdAt  DateTime    @default(now())
-  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id         String      @id @default(cuid())
+  employeeId String
+  reason     String
+  startDate  DateTime
+  endDate    DateTime
+  status     LeaveStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Client {
-  id          String   @id @default(cuid())
-  name        String
-  contact     String
-  projectName String
-  description String
-  createdAt   DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  contact     String
+  projectName String
+  description String
+  createdAt   DateTime @default(now())
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expires   DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-  @@unique([identifier, token])
+  @@unique([identifier, token])
 }
 
 enum Role {
-  ADMIN
-  EMPLOYEE
+  ADMIN
+  EMPLOYEE
 }
 
 enum LeaveStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  PENDING
+  APPROVED
+  REJECTED
 }

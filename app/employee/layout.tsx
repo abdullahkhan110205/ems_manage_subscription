@@ -1,8 +1,12 @@
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import UpgradeButton from "@/components/UpgradeButton";
+import { auth } from "@/lib/auth";
+import LockedNavItem from "@/components/LockedNavItem";
+import SubscriptionCard from "@/components/SubscriptionCard";
 
 
-export default function EmployeeLayout({
+export default async function EmployeeLayout({
 
     children,
 
@@ -11,6 +15,12 @@ export default function EmployeeLayout({
     children: React.ReactNode;
 
 }) {
+
+    const session = await auth();
+
+
+    const isPremium =
+    session?.user?.subscriptionStatus === "ACTIVE";
 
 
     return (
@@ -21,7 +31,8 @@ export default function EmployeeLayout({
 
             {/* Sidebar */}
 
-            <aside className="w-64 bg-white shadow-lg p-5">
+            <aside className="w-64 h-screen overflow-y-auto bg-white shadow-lg p-5 flex flex-col">
+
 
 
                 <h1 className="text-2xl font-bold text-green-600 mb-8">
@@ -34,7 +45,7 @@ export default function EmployeeLayout({
 
 
 
-                <nav className="space-y-3">
+                <nav className="space-y-3 flex-1">
 
 
 
@@ -106,35 +117,30 @@ export default function EmployeeLayout({
 
 
 
-                    <Link
+                    <LockedNavItem
 
-                    href="/employee/projects"
+    href="/employee/projects"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+    label="📂 My Projects"
 
-                    >
+    locked={!isPremium}
 
-                        📂 My Projects
-
-                    </Link>
+/>
 
 
 
 
 
 
-                    <Link
+                    <LockedNavItem
 
-                    href="/employee/payroll"
+    href="/employee/payroll"
 
-                    className="text-gray-900 block p-3 rounded hover:bg-gray-400"
+    label="💰 Payroll"
 
-                    >
+    locked={!isPremium}
 
-                        💰 Payroll
-
-                    </Link>
-
+/>
 
 
 
@@ -144,10 +150,39 @@ export default function EmployeeLayout({
 
 
 
+                {/* Subscription Button */}
+
+                <div className="mt-6">
+
+
+{
+    isPremium ? (
+
+        <SubscriptionCard
+            isPremium={true}
+        />
+
+    ) : (
+
+        <UpgradeButton />
+
+    )
+}
+
+
+</div>
 
 
 
-                <LogoutButton />
+
+
+                {/* Logout Button */}
+
+                <div className="mt-3">
+
+                    <LogoutButton />
+
+                </div>
 
 
 

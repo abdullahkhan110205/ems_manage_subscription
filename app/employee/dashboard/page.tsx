@@ -91,7 +91,7 @@ export default function EmployeeDashboard() {
 
   return (
 
-    <div className="min-h-screen bg-gray-100">
+    <div className="bg-gray-100">
 
 
       {/* Navbar */}
