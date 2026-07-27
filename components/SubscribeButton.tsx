@@ -15,6 +15,7 @@ export default function SubscribeButton({
 
   async function handleSubscribe() {
 
+    
     try {
 
       setLoading(true);
@@ -46,14 +47,19 @@ export default function SubscribeButton({
       }
 
 
-      if(data.url){
+     if (data.url) {
 
-        window.location.href = data.url;
+    window.location.href = data.url;
 
-      }
+}
+else {
+
+    window.location.reload();
+
+}
 
 
-    } catch(error:any){
+    } catch(error: any) {
 
       console.error(error);
 

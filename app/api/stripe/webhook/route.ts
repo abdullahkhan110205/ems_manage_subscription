@@ -122,7 +122,9 @@ export async function POST(
 if(
     event.type === 
     "customer.subscription.deleted"
-){
+)
+
+{
 
     const subscription =
         event.data.object as Stripe.Subscription;
@@ -156,6 +158,68 @@ if(
     );
 
 }
+
+
+if (
+    event.type === "customer.subscription.updated"
+) {
+
+    const subscription =
+        event.data.object as Stripe.Subscription;
+
+
+    const customerId =
+        subscription.customer as string;
+
+
+    const priceId =
+        subscription.items.data[0].price.id;
+
+
+
+    let plan = "BASIC";
+
+
+    if (
+        priceId === process.env.STRIPE_PRO_PRICE_ID
+    ) {
+        plan = "PRO";
+    }
+
+
+
+    await prisma.user.updateMany({
+
+        where:{
+            stripeCustomerId: customerId
+        },
+
+        data:{
+
+            subscriptionStatus:
+                subscription.status.toUpperCase(),
+
+            subscriptionPlan:
+                plan,
+
+            stripeSubscriptionId:
+                subscription.id
+
+        }
+
+    });
+
+
+
+    console.log(
+        "Subscription updated:",
+        customerId,
+        plan
+    );
+
+}
+
+
 
     return NextResponse.json({
         received: true

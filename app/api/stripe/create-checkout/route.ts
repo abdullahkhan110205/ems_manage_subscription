@@ -33,12 +33,12 @@ export async function POST(request: Request) {
         let priceId;
 
 
-        if(plan === "basic") {
+        if (plan === "basic") {
 
             priceId = process.env.STRIPE_BASIC_PRICE_ID;
 
         } 
-        else if(plan === "pro") {
+        else if (plan === "pro") {
 
             priceId = process.env.STRIPE_PRO_PRICE_ID;
 
@@ -47,10 +47,10 @@ export async function POST(request: Request) {
 
             return Response.json(
                 {
-                    error:"Invalid plan selected"
+                    error: "Invalid plan selected"
                 },
                 {
-                    status:400
+                    status: 400
                 }
             );
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
 
 
-        if(!user){
+        if (!user) {
 
             return Response.json(
                 {
@@ -83,23 +83,31 @@ export async function POST(request: Request) {
 
 
 
-        // Create Stripe customer if user does not already have one
+
+
+        /*
+            CREATE STRIPE CUSTOMER IF NOT EXISTS
+        */
+
 
         let customerId = user.stripeCustomerId;
 
 
 
-        if(!customerId){
+        if (!customerId) {
 
-            const customer = await stripe.customers.create({
 
-                email: user.email!,
+            const customer =
+                await stripe.customers.create({
 
-                metadata:{
-                    userId:user.id
-                }
+                    email:user.email!,
 
-            });
+                    metadata:{
+                        userId:user.id
+                    }
+
+                });
+
 
 
             customerId = customer.id;
@@ -113,7 +121,7 @@ export async function POST(request: Request) {
                 },
 
                 data:{
-                    stripeCustomerId: customerId
+                    stripeCustomerId:customerId
                 }
 
             });
@@ -123,10 +131,108 @@ export async function POST(request: Request) {
 
 
 
+
+
+
+        /*
+            EXISTING SUBSCRIBER
+            UPDATE SUBSCRIPTION
+        */
+
+
+        if (
+            user.stripeSubscriptionId &&
+            user.subscriptionStatus === "ACTIVE"
+        ) {
+
+
+            const subscription =
+                await stripe.subscriptions.retrieve(
+                    user.stripeSubscriptionId
+                );
+
+
+
+            const subscriptionItemId =
+                subscription.items.data[0].id;
+
+
+
+            const updatedSubscription =
+                await stripe.subscriptions.update(
+
+                    user.stripeSubscriptionId,
+
+                    {
+
+                        items:[
+                            {
+                                id:subscriptionItemId,
+
+                                price:priceId
+
+                            }
+                        ],
+
+
+                        proration_behavior:
+                            "create_prorations"
+
+                    }
+
+                );
+
+
+
+            /*
+                UPDATE DATABASE IMMEDIATELY
+            */
+
+
+            await prisma.user.update({
+
+                where:{
+                    id:user.id
+                },
+
+                data:{
+                    subscriptionStatus:"ACTIVE",
+                    subscriptionPlan: plan
+                }
+
+            });
+
+
+
+            return Response.json({
+
+                message:
+                    "Subscription updated successfully",
+
+                subscription:
+                    updatedSubscription
+
+            });
+
+
+        }
+
+
+
+
+
+
+
+        /*
+            FIRST TIME SUBSCRIBER
+            CREATE CHECKOUT SESSION
+        */
+
+
         const checkoutSession =
             await stripe.checkout.sessions.create({
 
-                customer: customerId,
+                customer:customerId,
 
 
                 mode:"subscription",
@@ -135,13 +241,14 @@ export async function POST(request: Request) {
                 line_items:[
 
                     {
-                        price: priceId!,
+
+                        price:priceId,
 
                         quantity:1
+
                     }
 
                 ],
-
 
 
                 metadata:{
@@ -153,17 +260,29 @@ export async function POST(request: Request) {
                 },
 
 
+                subscription_data:{
+
+                    metadata:{
+
+                        userId:user.id,
+
+                        plan:plan
+
+                    }
+
+                },
+
 
                 success_url:
                 `${process.env.NEXTAUTH_URL}/employee/dashboard?success=true`,
 
 
-
                 cancel_url:
                 `${process.env.NEXTAUTH_URL}/employee/dashboard?cancelled=true`
 
-
             });
+
+
 
 
 
@@ -176,7 +295,7 @@ export async function POST(request: Request) {
 
         return Response.json({
 
-            url: checkoutSession.url
+            url:checkoutSession.url
 
         });
 
