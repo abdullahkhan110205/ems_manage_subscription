@@ -57,7 +57,7 @@ export async function POST() {
                 customer:user.stripeCustomerId,
 
                 return_url:
-                "http://localhost:3000/employee/subscription"
+`${process.env.NEXTAUTH_URL}/employee/subscription`
 
             });
 
