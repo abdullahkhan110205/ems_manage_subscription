@@ -155,12 +155,12 @@ export async function POST(request: Request) {
 
 
                 success_url:
-                "${process.env.NEXTAUTH_URL}/employee/dashboard?success=true",
+                `${process.env.NEXTAUTH_URL}/employee/dashboard?success=true`,
 
 
 
                 cancel_url:
-                "${process.env.NEXTAUTH_URL}/employee/dashboard?cancelled=true"
+                `${process.env.NEXTAUTH_URL}/employee/dashboard?cancelled=true`
 
 
             });
