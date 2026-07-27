@@ -1,15 +1,13 @@
 import { stripe } from "@/lib/stripe";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 
-export async function POST() {
+export async function POST(request: Request) {
 
     try {
 
         const session = await auth();
-
-
-        console.log("SESSION:", session);
 
 
         if (!session?.user?.id) {
@@ -26,46 +24,143 @@ export async function POST() {
         }
 
 
-        console.log(
-            "STRIPE KEY EXISTS:",
-            !!process.env.STRIPE_SECRET_KEY
-        );
+        const body = await request.json();
+
+        const plan = body.plan;
 
 
-        console.log(
-            "PRICE ID:",
-            process.env.STRIPE_PRICE_ID
-        );
+
+        let priceId;
+
+
+        if(plan === "basic") {
+
+            priceId = process.env.STRIPE_BASIC_PRICE_ID;
+
+        } 
+        else if(plan === "pro") {
+
+            priceId = process.env.STRIPE_PRO_PRICE_ID;
+
+        } 
+        else {
+
+            return Response.json(
+                {
+                    error:"Invalid plan selected"
+                },
+                {
+                    status:400
+                }
+            );
+
+        }
+
+
+
+        const user = await prisma.user.findUnique({
+
+            where:{
+                id: session.user.id
+            }
+
+        });
+
+
+
+        if(!user){
+
+            return Response.json(
+                {
+                    error:"User not found"
+                },
+                {
+                    status:404
+                }
+            );
+
+        }
+
+
+
+        // Create Stripe customer if user does not already have one
+
+        let customerId = user.stripeCustomerId;
+
+
+
+        if(!customerId){
+
+            const customer = await stripe.customers.create({
+
+                email: user.email!,
+
+                metadata:{
+                    userId:user.id
+                }
+
+            });
+
+
+            customerId = customer.id;
+
+
+
+            await prisma.user.update({
+
+                where:{
+                    id:user.id
+                },
+
+                data:{
+                    stripeCustomerId: customerId
+                }
+
+            });
+
+        }
+
 
 
 
         const checkoutSession =
             await stripe.checkout.sessions.create({
 
-                mode: "subscription",
+                customer: customerId,
 
 
-                line_items: [
+                mode:"subscription",
+
+
+                line_items:[
+
                     {
-                        price: process.env.STRIPE_PRICE_ID!,
-                        quantity: 1,
+                        price: priceId!,
+
+                        quantity:1
                     }
+
                 ],
 
 
-                metadata: {
 
-                    userId: session.user.id,
+                metadata:{
+
+                    userId:user.id,
+
+                    plan:plan
 
                 },
+
 
 
                 success_url:
                 "http://localhost:3000/employee/dashboard?success=true",
 
 
+
                 cancel_url:
-                "http://localhost:3000/employee/dashboard?cancelled=true",
+                "http://localhost:3000/employee/dashboard?cancelled=true"
 
 
             });
@@ -99,7 +194,7 @@ export async function POST() {
         return Response.json(
 
             {
-                error: error.message
+                error:error.message
             },
 
             {

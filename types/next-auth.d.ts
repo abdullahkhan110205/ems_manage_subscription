@@ -50,3 +50,35 @@ declare module "next-auth/jwt" {
 
 
 }
+
+import NextAuth from "next-auth";
+
+
+declare module "next-auth" {
+
+    interface Session {
+
+        user: {
+
+            id: string;
+
+            role: string;
+
+            subscriptionStatus: string;
+
+            subscriptionPlan: string;
+
+        };
+
+    }
+
+
+    interface User {
+
+        subscriptionPlan?: string;
+
+        subscriptionStatus?: string;
+
+    }
+
+}

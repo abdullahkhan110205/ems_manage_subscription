@@ -59,7 +59,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       credentials: {
 
-
         email: {
 
           label: "Email",
@@ -76,7 +75,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           type: "password",
 
         },
-
 
       },
 
@@ -145,6 +143,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           subscriptionStatus: user.subscriptionStatus,
 
+          subscriptionPlan: user.subscriptionPlan || "FREE",
+
 
         };
 
@@ -184,34 +184,71 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 
 
+
     async jwt({ token, user }) {
 
-  // First login
-  if (user) {
-    token.id = user.id;
-    token.role = user.role;
-    token.subscriptionStatus = user.subscriptionStatus;
-  }
 
-  // Always refresh from database
-  if (token.email) {
+      // First login
+      if (user) {
 
-    const dbUser = await prisma.user.findUnique({
-      where: {
-        email: token.email,
-      },
-    });
+        token.id = user.id;
 
-    if (dbUser) {
-      token.role = dbUser.role;
-      token.subscriptionStatus = dbUser.subscriptionStatus;
-    }
+        token.role = user.role;
 
-  }
+        token.subscriptionStatus =
+          user.subscriptionStatus;
 
-  return token;
+        token.subscriptionPlan =
+          user.subscriptionPlan || "FREE";
 
-},
+      }
+
+
+
+      // Always refresh subscription data from database
+
+      if (token.email) {
+
+
+        const dbUser = await prisma.user.findUnique({
+
+          where: {
+
+            email: token.email,
+
+          },
+
+        });
+
+
+
+        if (dbUser) {
+
+
+          token.role =
+            dbUser.role;
+
+
+          token.subscriptionStatus =
+            dbUser.subscriptionStatus;
+
+
+          token.subscriptionPlan =
+            dbUser.subscriptionPlan || "FREE";
+
+
+        }
+
+
+      }
+
+
+
+      return token;
+
+
+    },
+
 
 
 
@@ -225,7 +262,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
 
 
-
         session.user.id =
           token.id as string;
 
@@ -236,7 +272,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 
 
-        session.user.subscriptionStatus = token.subscriptionStatus as string;
+        session.user.subscriptionStatus =
+          token.subscriptionStatus as string;
+
+
+
+        session.user.subscriptionPlan =
+          token.subscriptionPlan as string;
 
 
 
@@ -248,6 +290,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 
     },
+
 
 
 

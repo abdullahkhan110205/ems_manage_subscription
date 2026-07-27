@@ -8,46 +8,25 @@ datasource db {
 }
 
 model User {
+  id                    String               @id @default(cuid())
+  name                  String
+  email                 String               @unique
+  password              String?
+  role                  Role                 @default(EMPLOYEE)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  emailVerified         DateTime?
+  image                 String?
 
-  id String @id @default(cuid())
+  accounts              Account[]
+  employee              Employee?
+  passwordResetTokens   PasswordResetToken[]
+  sessions              Session[]
 
-  name String
-
-  email String @unique
-
-  password String?
-
-  role Role @default(EMPLOYEE)
-
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-
-  emailVerified DateTime?
-
-  image String?
-
-
-  accounts Account[]
-
-  employee Employee?
-
-  passwordResetTokens PasswordResetToken[]
-
-  sessions Session[]
-
-
-
-  // Stripe fields
-
-  stripeCustomerId String? @unique
-
-  stripeSubscriptionId String? @unique
-
-  subscriptionStatus String @default("FREE")
-
+  stripeCustomerId      String? @unique
+  stripeSubscriptionId  String? @unique
+  subscriptionStatus    String @default("FREE")
+  subscriptionPlan String?
 }
 
 model Department {

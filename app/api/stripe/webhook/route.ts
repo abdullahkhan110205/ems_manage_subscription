@@ -3,11 +3,8 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
-
 const webhookSecret =
     process.env.STRIPE_WEBHOOK_SECRET!;
-
-
 
 export async function POST(
     request: NextRequest
@@ -16,20 +13,14 @@ export async function POST(
     const body =
         await request.text();
 
-
     const signature =
         request.headers.get(
             "stripe-signature"
         )!;
 
-
-
     let event: Stripe.Event;
 
-
-
     try {
-
 
         event =
             stripe.webhooks.constructEvent(
@@ -42,112 +33,132 @@ export async function POST(
 
             );
 
-
     } catch (error) {
-
 
         console.error(
             "Webhook signature verification failed",
             error
         );
 
-
         return new NextResponse(
             "Webhook Error",
             {
-                status:400
+                status: 400
             }
         );
 
     }
 
+    if (event.type === "checkout.session.completed") {
+
+    const session =
+        event.data.object as Stripe.Checkout.Session;
+
+
+    const userId =
+        session.metadata?.userId;
+
+
+    const subscriptionId =
+        session.subscription as string;
+
+
+    const customerId =
+        session.customer as string;
+
+
+    const plan =
+        session.metadata?.plan;
 
 
 
-    if (
-        event.type ===
-        "checkout.session.completed"
-    ) {
+    if (!userId) {
+
+        console.error(
+            "No userId found in metadata"
+        );
+
+        return NextResponse.json({
+            received:true
+        });
+
+    }
 
 
-        const session =
-    event.data.object as Stripe.Checkout.Session;
+    await prisma.user.update({
 
+        where:{
+            id:userId
+        },
 
+        data:{
 
-        const userId =
-            session.metadata?.userId;
+            subscriptionStatus:"ACTIVE",
 
+            subscriptionPlan:
+                plan?.toUpperCase(),
 
+            stripeCustomerId:
+                customerId,
 
-        const subscriptionId =
-            session.subscription as string;
-
-
-
-        const customerId =
-            session.customer as string;
-
-
-
-        if (!userId) {
-
-
-            console.error(
-                "No userId found in metadata"
-            );
-
-
-            return NextResponse.json({
-                received:true
-            });
+            stripeSubscriptionId:
+                subscriptionId,
 
         }
 
+    });
+
+
+    console.log(
+        "Subscription activated:",
+        userId
+    );
+
+}
 
 
 
-        await prisma.user.update({
 
-            where:{
-                id:userId
-            },
+if(
+    event.type === 
+    "customer.subscription.deleted"
+){
 
-
-            data:{
-
-
-                subscriptionStatus:
-                    "ACTIVE",
+    const subscription =
+        event.data.object as Stripe.Subscription;
 
 
-                stripeCustomerId:
-                    customerId,
-
-
-                stripeSubscriptionId:
-                    subscriptionId,
-
-
-            }
-
-        });
+    const customerId =
+        subscription.customer as string;
 
 
 
-        console.log(
-            "Subscription activated for:",
-            userId
-        );
+    await prisma.user.update({
+
+        where:{
+            stripeCustomerId: customerId
+        },
+
+        data:{
+
+            subscriptionStatus:"CANCELED",
+
+            subscriptionPlan:"FREE"
+
+        }
+
+    });
 
 
-    }
+    console.log(
+        "Subscription cancelled:",
+        customerId
+    );
 
-
-
+}
 
     return NextResponse.json({
-        received:true
+        received: true
     });
 
 }

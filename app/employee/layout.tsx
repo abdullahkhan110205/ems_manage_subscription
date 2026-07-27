@@ -20,8 +20,22 @@ export default async function EmployeeLayout({
     const session = await auth();
 
 
-    const isPremium =
-        session?.user?.subscriptionStatus === "ACTIVE";
+    const subscriptionPlan =
+        session?.user?.subscriptionPlan || "FREE";
+
+
+    // Access control based on subscription plan
+    // BASIC: Projects unlocked
+    // PRO: Projects + Payroll unlocked
+    // FREE: Both locked
+
+    const hasBasicAccess =
+        subscriptionPlan === "BASIC" ||
+        subscriptionPlan === "PRO";
+
+
+    const hasProAccess =
+        subscriptionPlan === "PRO";
 
 
 
@@ -30,11 +44,9 @@ export default async function EmployeeLayout({
         <div className="min-h-screen flex bg-gray-100">
 
 
-
             {/* Sidebar */}
 
             <aside className="w-64 h-screen overflow-y-auto bg-white shadow-lg p-5 flex flex-col">
-
 
 
                 <h1 className="text-2xl font-bold text-green-600 mb-8">
@@ -45,10 +57,7 @@ export default async function EmployeeLayout({
 
 
 
-
-
                 <nav className="space-y-3 flex-1">
-
 
 
                     <Link
@@ -62,7 +71,6 @@ export default async function EmployeeLayout({
                         🏠 Dashboard
 
                     </Link>
-
 
 
 
@@ -82,7 +90,6 @@ export default async function EmployeeLayout({
 
 
 
-
                     <Link
 
                         href="/employee/attendance"
@@ -94,7 +101,6 @@ export default async function EmployeeLayout({
                         📅 Attendance
 
                     </Link>
-
 
 
 
@@ -121,7 +127,7 @@ export default async function EmployeeLayout({
 
                         label="📂 My Projects"
 
-                        locked={!isPremium}
+                        locked={!hasBasicAccess}
 
                     />
 
@@ -135,15 +141,13 @@ export default async function EmployeeLayout({
 
                         label="💰 Payroll"
 
-                        locked={!isPremium}
+                        locked={!hasProAccess}
 
                     />
 
 
 
 
-
-                    {/* Subscription Page */}
 
                     <Link
 
@@ -166,29 +170,28 @@ export default async function EmployeeLayout({
 
 
 
-
                 {/* Subscription Status */}
 
                 <div className="text-gray-900 mt-6">
 
 
                     {
-                        isPremium ? (
-
-                            <SubscriptionCard
-
-                                isPremium={true}
-
-                            />
-
-
-                        ) : (
-
+                        subscriptionPlan === "FREE" ? (
 
                             <UpgradeButton />
 
 
+                        ) : (
+
+                            <SubscriptionCard
+
+                                subscriptionPlan={subscriptionPlan}
+
+                            />
+
+
                         )
+
                     }
 
 
